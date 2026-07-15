@@ -13,7 +13,7 @@
   --white: #FFFFFF;
   --bg: #F7F7F7;
   --card: #FFFFFF;
-  --text: #111111;5
+  --text: #111111;
   --text2: #666666;
   --border: #EBEBEB;
   --shadow: 0 2px 12px rgba(0,0,0,0.08);
@@ -592,13 +592,36 @@ function placeOrder(){
   const ad=document.getElementById('inp-address').value.trim();
   if(!ph){showToast(t('fillPhone'));return;}
   if(!ad){showToast(t('fillAddress'));return;}
-  if(window.Telegram?.WebApp){
-    window.Telegram.WebApp.sendData(JSON.stringify({
-      items:Object.entries(cart).map(([id,qty])=>{const m=MENU.find(x=>x.id==id);return{id,name_uz:m.uz,name_ru:m.ru,emoji:m.e,qty,price:m.p};}),
-      total:getTotal(), phone:ph, address:ad,
-      comment:document.getElementById('inp-comment').value.trim()
-    }));
+
+  const orderData = JSON.stringify({
+    items: Object.entries(cart).map(([id,qty])=>{
+      const m=MENU.find(x=>x.id==id);
+      return {id:parseInt(id), name_uz:m.uz, name_ru:m.ru, emoji:m.e, qty:qty, price:m.p};
+    }),
+    total: getTotal(),
+    phone: ph,
+    address: ad,
+    comment: document.getElementById('inp-comment').value.trim()
+  });
+
+  console.log('sendData chaqirilmoqda:', orderData);
+
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if(tg){
+    try {
+      tg.sendData(orderData);
+      console.log('sendData muvaffaqiyatli!');
+    } catch(e) {
+      console.error('sendData xato:', e);
+      alert('Xatolik: ' + e.message);
+      return;
+    }
+  } else {
+    console.warn('Telegram WebApp topilmadi!');
+    alert('Telegram orqali oching!');
+    return;
   }
+
   cart={}; renderCartBar(); renderMenu();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active','prev'));
   document.getElementById('pg-success').classList.add('active');
